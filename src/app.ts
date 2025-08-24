@@ -1,3 +1,5 @@
-export const nombre = 'Marvin'
+import Server from "./server/server";
 
-console.log(nombre)
+const server = new Server();
+
+server.listen();
