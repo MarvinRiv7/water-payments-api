@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Client } from "./clients.models";
 
 export const clientsGet = async (req: Request, res: Response) => {
   try {
@@ -14,10 +15,12 @@ export const clientsGet = async (req: Request, res: Response) => {
 
 export const clientsPost = async (req: Request, res: Response) => {
   try {
-    const body = req.body;
+    const { dui, nombre, apellido } = req.body;
+    const client = new Client({ dui, nombre, apellido });
+
+    await client.save();
     res.status(201).json({
-      msg: "Post",
-      body,
+      client,
     });
   } catch (error) {
     res.status(500).json({
@@ -51,3 +54,5 @@ export const clientsDelete = async (req: Request, res: Response) => {
     });
   }
 };
+
+//V7DmO1z9aBGjqB4g

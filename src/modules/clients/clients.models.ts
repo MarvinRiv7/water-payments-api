@@ -1,0 +1,25 @@
+import { model, Schema } from "mongoose";
+import { IClients } from "./clients.interface";
+
+export const clientsSchema = new Schema<IClients>({
+  dui: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  nombre: {
+    type: String,
+    required: true,
+  },
+  apellido: {
+    type: String,
+    required: true,
+  },
+});
+
+clientsSchema.methods.toJSON = function () {
+  const { __v, ...client } = this.toObject();
+  return client;
+};
+
+export const Client = model<IClients>("Client", clientsSchema);
