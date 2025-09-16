@@ -7,14 +7,16 @@ import {
 } from "./clients.controller";
 import { check } from "express-validator";
 import { validarCampos } from "../../middlewares/validar-campos";
-import { existeDUI } from "../../utils/db-validators";
+import { existeClientId, existeDUI } from "../../utils/db-validators";
+import { authMiddleware } from "../../middlewares/validar-jwt";
 
 const router = Router();
 
-router.get("/", clientsGet);
+router.get("/", authMiddleware, clientsGet);
 router.post(
   "/",
   [
+    authMiddleware,
     check("dui", "El dui no es valido")
       .notEmpty()
       .withMessage("El DUI es obligatorio")
@@ -35,7 +37,33 @@ router.post(
   ],
   clientsPost
 );
-router.put("/:id", clientsPut);
-router.delete("/:id", clientsDelete);
+router.put(
+  "/:id",
+  [
+    authMiddleware,
+    check("id", "No es un ID valido").isMongoId(),
+    check("id").custom(existeClientId),
+    check("nombre", "El nombre no es valido")
+      .notEmpty()
+      .withMessage("El nombre es obligatorio")
+      .isLength({ min: 3 }),
+    check("apellido", "El apellido no es valido")
+      .notEmpty()
+      .withMessage("El apellido es obligatorio")
+      .isLength({ min: 3 }),
+    validarCampos,
+  ],
+  clientsPut
+);
+router.delete(
+  "/:id",
+  [
+    authMiddleware,
+    check("id", "No es un ID valido").isMongoId(),
+    check("id").custom(existeClientId),
+    validarCampos,
+  ],
+  clientsDelete
+);
 
 export default router;

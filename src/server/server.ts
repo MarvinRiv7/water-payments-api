@@ -2,7 +2,9 @@ import express, { Application } from "express";
 
 import cors from "cors";
 import clientsRoutes from "../modules/modules.routes";
+import authRoutes from "../modules/modules.routes";
 import { dbConnection } from "../database/config";
+import { createDefaultUser } from "../services/auth.services";
 
 class Server {
   private app: Application;
@@ -11,12 +13,16 @@ class Server {
   constructor() {
     this.app = express();
     this.port = process.env.PORT || "8081";
-    this.conectarDB()
+    this.conectarDB();
+    this.createUser()
     this.middlewarws();
     this.routes();
   }
+  async createUser () {
+    await createDefaultUser()
+  }
   async conectarDB() {
-    await dbConnection()
+    await dbConnection();
   }
   middlewarws() {
     this.app.use(cors());
@@ -25,6 +31,7 @@ class Server {
   }
   routes() {
     this.app.use("/api", clientsRoutes);
+    this.app.use("/api", authRoutes);
   }
   listen() {
     this.app.listen(this.port, () => {
