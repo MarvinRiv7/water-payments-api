@@ -3,8 +3,9 @@ import express, { Application } from "express";
 import cors from "cors";
 import clientsRoutes from "../modules/modules.routes";
 import authRoutes from "../modules/modules.routes";
+import paymentsRoutes from "../modules/modules.routes";
 import { dbConnection } from "../database/config";
-import { createDefaultUser } from "../services/auth.services";
+import { createDefaultUser } from "../services/auth.service";
 
 class Server {
   private app: Application;
@@ -32,6 +33,7 @@ class Server {
   routes() {
     this.app.use("/api", clientsRoutes);
     this.app.use("/api", authRoutes);
+    this.app.use("/api", paymentsRoutes);
   }
   listen() {
     this.app.listen(this.port, () => {
