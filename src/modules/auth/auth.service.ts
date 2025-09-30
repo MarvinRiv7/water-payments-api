@@ -1,6 +1,6 @@
-import { User } from "../modules/auth/auth.models";
+import { User } from "./auth.models";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../utils/jwt";
+import { generateToken } from "../../utils/jwt";
 
 export const createDefaultUser = async () => {
   const existing = await User.findOne({ username: process.env.DEFAULT_USER });

@@ -5,7 +5,7 @@ import clientsRoutes from "../modules/modules.routes";
 import authRoutes from "../modules/modules.routes";
 import paymentsRoutes from "../modules/modules.routes";
 import { dbConnection } from "../database/config";
-import { createDefaultUser } from "../services/auth.service";
+import { createDefaultUser } from "../modules/auth/auth.service";
 
 class Server {
   private app: Application;

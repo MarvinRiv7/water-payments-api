@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Client } from "./clients.models";
 import { Payment } from "../payments/payments.models";
+import { ClientCreateInput, ClientUpdateInput } from "./schemas/client.schema";
 
 export const clientsGet = async (req: Request, res: Response) => {
   try {
@@ -51,36 +52,93 @@ export const getClientStats = async (req: Request, res: Response) => {
   }
 };
 
-export const clientsPost = async (req: Request, res: Response) => {
+export const getClientByDui = async (req: Request, res: Response) => {
   try {
-    const { dui, nombre, apellido, ultimoMes, ultimoAnio, estado } = req.body;
-    const client = new Client({ dui, nombre, apellido, ultimoMes, ultimoAnio, estado });
+    const { dui } = req.params;
+    const client = await Client.findOne({ dui });
 
-    await client.save();
-    res.status(201).json({
-      client,
-    });
+    if (!client) {
+      return res.status(404).json({ msg: "Cliente no encontrado" });
+    }
+
+    res.status(200).json({ client });
   } catch (error) {
-    res.status(500).json({
-      msg: "Erro al crear clientes",
-    });
+    console.error(error);
+    res.status(500).json({ msg: "Error al obtener cliente" });
   }
 };
-export const clientsPut = async (req: Request, res: Response) => {
+
+export const clientsPost = async (
+  req: Request<{}, {}, ClientCreateInput>,
+  res: Response
+) => {
+  try {
+    // req.body ya está validado por Zod en el middleware
+    const {
+      dui,
+      nombre,
+      apellido,
+      ultimoMes,
+      ultimoAnio,
+      estado,
+      pagoTipo,
+      mesesAtrasados
+    } = req.body;
+
+    const client = new Client({
+      dui,
+      nombre,
+      apellido,
+      ultimoMes,
+      ultimoAnio,
+      estado,
+      pagoTipo,
+      mesesAtrasados: 0
+    });
+    const duiExiste = await Client.findOne({ dui });
+    if (duiExiste) {
+      res.status(404).json({
+        msg: `Ya existe una persona con este dui ${dui}`,
+      });
+    }
+    await client.save();
+
+    res.status(201).json({ client });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Error al crear cliente" });
+  }
+};
+export const clientsPut = async (
+  req: Request<{ id: string }, {}, Partial<ClientUpdateInput>>,
+  res: Response
+) => {
   try {
     const { id } = req.params;
-    const { _id, dui, ...resto } = req.body;
-    const client = await Client.findByIdAndUpdate(id, resto, { new: true });
-    res.status(200).json({
-      client,
+    const { nombre, apellido, estado, pagoTipo } = req.body;
+
+    // 🔹 Logs para depuración
+    console.log("➡️ PUT /clients/:id");
+    console.log("ID recibido:", id);
+    console.log("Body recibido:", req.body);
+
+    const dataToUpdate = { nombre, apellido, estado, pagoTipo };
+
+    const client = await Client.findByIdAndUpdate(id, dataToUpdate, {
+      new: true,
     });
+
+    if (!client) {
+      console.warn("⚠️ Cliente no encontrado con id:", id);
+      return res.status(404).json({ msg: "Cliente no encontrado" });
+    }
+
+    res.json({ client });
   } catch (error) {
-    res.status(500).json({
-      msg: "Error al actualizar",
-    });
+    console.error("❌ Error en clientsPut:", error);
+    res.status(500).json({ msg: "Error al actualizar cliente" });
   }
 };
-
 
 export const clientsDelete = async (req: Request, res: Response) => {
   try {
@@ -103,6 +161,3 @@ export const clientsDelete = async (req: Request, res: Response) => {
     });
   }
 };
-
-
-//V7DmO1z9aBGjqB4g

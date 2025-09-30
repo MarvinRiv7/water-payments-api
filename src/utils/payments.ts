@@ -1,8 +1,21 @@
 import dayjs from "dayjs";
 
-// ✅ Calcular monto base (sin mora)
-export const calcularMonto = (anio: number, mes: string) => {
-  return 7; // monto base fijo
+// utils/payments.ts
+export const calcularMonto = (
+  anio: number,
+  mes: string,
+  pagoTipo: "maximo" | "medio" | "minimo"
+) => {
+  let base = 7;
+  let mora = 1;
+
+  if (pagoTipo === "medio") {
+    base = 5;
+  } else if (pagoTipo === "minimo") {
+    base = 3.5;
+  }
+
+  return { base, mora, totalMora: base + mora };
 };
 
 // ✅ Obtener siguiente mes/año

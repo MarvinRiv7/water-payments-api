@@ -4,18 +4,19 @@ import {
   obtenerMesesDisponibles,
   pagarMesesSeleccionados,
   pagosPorAnio,
+  pagosPorClienteAnio,
+  clientesAtrasados,
 } from "./payments.controller";
 import { authMiddleware } from "../../middlewares/validar-jwt";
 import { param, body } from "express-validator";
 import { validarCampos } from "../../middlewares/validar-campos";
 import { Payment } from "./payments.models";
 import { Client } from "../clients/clients.models";
-import PDFDocument from 'pdfkit';
+import PDFDocument from "pdfkit";
 
 const router = Router();
 
 router.get("/", authMiddleware, paymentsGet);
-
 
 // 🔹 Buscar meses por DUI
 router.get(
@@ -27,15 +28,13 @@ router.get(
   ],
   obtenerMesesDisponibles
 );
-// Pagos por año
-router.get(
-  "/anio/:anio",
-  authMiddleware,
-  pagosPorAnio
-);
+
+router.get("/anio/:anio/client/:clientId", authMiddleware, pagosPorClienteAnio);
+
+router.get("/anio/:anio", authMiddleware, pagosPorAnio);
+router.get("/clientes/atrasados", authMiddleware, clientesAtrasados);
 
 
-// 🔹 Pagar meses por DUI
 router.post(
   "/:dui/pagar-seleccion",
   [
