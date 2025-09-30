@@ -6,14 +6,14 @@ import dayjs from "dayjs";
 import { Client } from "../clients/clients.models";
 
 // ✅ Obtener todos los pagos
-export const paymentsGet = async (req: Request, res: Response) => {
-  try {
-    const payments = await PaymentService.obtenerPagos();
-    res.status(200).json({ payments });
-  } catch (error) {
-    res.status(500).json({ msg: "Error al obtener pagos" });
-  }
-};
+// export const paymentsGet = async (req: Request, res: Response) => {
+//   try {
+//     const payments = await PaymentService.obtenerPagos();
+//     res.status(200).json({ payments });
+//   } catch (error) {
+//     res.status(500).json({ msg: "Error al obtener pagos" });
+//   }
+// };
 
 export const pagosPorClienteAnio = async (req: Request, res: Response) => {
   try {

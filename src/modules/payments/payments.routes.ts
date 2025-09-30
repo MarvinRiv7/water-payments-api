@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  paymentsGet,
   obtenerMesesDisponibles,
   pagarMesesSeleccionados,
   pagosPorAnio,
@@ -16,7 +15,7 @@ import PDFDocument from "pdfkit";
 
 const router = Router();
 
-router.get("/", authMiddleware, paymentsGet);
+// router.get("/", authMiddleware, paymentsGet);
 
 // 🔹 Buscar meses por DUI
 router.get(
