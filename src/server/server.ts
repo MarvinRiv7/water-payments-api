@@ -15,18 +15,25 @@ class Server {
     this.app = express();
     this.port = process.env.PORT || "8081";
     this.conectarDB();
-    this.createUser()
+    this.createUser();
     this.middlewarws();
     this.routes();
   }
-  async createUser () {
-    await createDefaultUser()
+  async createUser() {
+    await createDefaultUser();
   }
   async conectarDB() {
     await dbConnection();
   }
   middlewarws() {
-    this.app.use(cors());
+    this.app.use(
+      cors({
+        origin: ["https://water-app-ten.vercel.app"], // tu frontend en Vercel
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+      })
+    );
     this.app.use(express.static("public"));
     this.app.use(express.json());
   }
