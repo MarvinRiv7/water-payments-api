@@ -2,7 +2,9 @@ import dayjs from "dayjs";
 import { Client } from "../clients/clients.models";
 import { Payment } from "./payments.models";
 import { calcularMonto, obtenerSiguienteMes } from "../../utils/payments";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
+dayjs.extend(isSameOrBefore);
 export class PaymentService {
   static async obtenerMesesDisponiblesPorDui(dui: string) {
     const hoy = dayjs();
@@ -142,11 +144,10 @@ export class PaymentService {
         clienteDB.pagoTipo
       );
 
-      // Aplica mora solo si ya acumuló ≥2 atrasos y el mes ya empezó
-      const monto =
-        mesesAtrasados >= 2 && !fechaMes.isAfter(hoy, "month")
-          ? base + mora
-          : base;
+      // ✅ Aplica mora si ya acumuló ≥2 atrasos y el mes ya comenzó o es actual
+      const aplicaMora =
+        mesesAtrasados >= 2 && fechaMes.isSameOrBefore(hoy, "month");
+      const monto = aplicaMora ? base + mora : base;
 
       const pago = new Payment({
         client: clienteDB._id,
@@ -165,27 +166,27 @@ export class PaymentService {
         mes,
         monto: parseFloat(monto.toFixed(2)),
         fechaPago: pago.fechaPago,
-        moraAplicada: monto > base,
+        moraAplicada: aplicaMora,
       });
 
       total += monto;
 
       // Incrementa meses atrasados solo si el mes ya pasó o es actual
-      if (!fechaMes.isAfter(hoy, "month")) mesesAtrasados++;
+      if (fechaMes.isSameOrBefore(hoy, "month")) mesesAtrasados++;
     }
-
-    // 🔹 Reiniciar contador si no hay meses pendientes hasta hoy
-    const mesesPendientesActualizados = await Payment.find({
-      client: clienteDB._id,
-      $or: [
-        { anio: { $lt: hoy.year() } },
-        { anio: hoy.year(), mes: { $lte: hoy.month() + 1 } },
-      ],
-    }).lean();
-    if (mesesPendientesActualizados.length === 0) mesesAtrasados = 0;
 
     if (pagosGuardados.length > 0) {
       const ultimoPagado = pagosGuardados[pagosGuardados.length - 1];
+
+      // ✅ Reiniciar atrasos si ya está al día hasta el mes actual
+      if (
+        ultimoPagado.anio > hoy.year() ||
+        (ultimoPagado.anio === hoy.year() &&
+          ultimoPagado.mes >= hoy.month() + 1)
+      ) {
+        mesesAtrasados = 0;
+      }
+
       clienteDB.ultimoMes = ultimoPagado.mes;
       clienteDB.ultimoAnio = ultimoPagado.anio;
       clienteDB.mesesAtrasados = mesesAtrasados;
