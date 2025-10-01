@@ -28,6 +28,13 @@ router.get(
   obtenerMesesDisponibles
 );
 
+router.get(
+  "/meses-disponibles",
+  [authMiddleware],
+  obtenerMesesDisponibles
+);
+
+
 router.get("/anio/:anio/client/:clientId", authMiddleware, pagosPorClienteAnio);
 
 router.get("/anio/:anio", authMiddleware, pagosPorAnio);

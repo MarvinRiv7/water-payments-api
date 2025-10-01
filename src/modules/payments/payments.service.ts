@@ -26,7 +26,7 @@ export class PaymentService {
       ? obtenerSiguienteMes(ultimoPagoDoc.anio, parseInt(ultimoPagoDoc.mes))
       : obtenerSiguienteMes(clienteDB.ultimoAnio, clienteDB.ultimoMes);
 
-    const LIMITE_ANIO = 2027;
+    const LIMITE_ANIO = 2028;
     const mesesDisponibles: any[] = [];
 
     let mesesAtrasados = clienteDB.mesesAtrasados || 0;
@@ -98,7 +98,7 @@ export class PaymentService {
         ? obtenerSiguienteMes(clienteDB.ultimoAnio, clienteDB.ultimoMes)
         : { mes: 1, anio: 2025 };
 
-    while (nextMes.anio <= 2027) {
+    while (nextMes.anio <= 2028) {
       const key = `${nextMes.anio}-${nextMes.mes}`;
       if (!mesesPagados.has(key))
         mesesPendientes.push({ anio: nextMes.anio, mes: nextMes.mes });

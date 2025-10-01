@@ -77,11 +77,15 @@ export const clientesAtrasados = async (req: Request, res: Response) => {
       }
 
       // Solo contar atraso si el último pago fue antes del mes actual
-      if (lastAnio < anioActual || (lastAnio === anioActual && lastMes < mesActual)) {
+      if (
+        lastAnio < anioActual ||
+        (lastAnio === anioActual && lastMes < mesActual)
+      ) {
         const mesesAtraso =
           (anioActual - lastAnio) * 12 + (mesActual - lastMes - 1); // meses completos atrasados
 
-        if (mesesAtraso > 0) { // 🔹 Solo agregar si hay atraso real
+        if (mesesAtraso > 0) {
+          // 🔹 Solo agregar si hay atraso real
           atrasados.push({
             cliente,
             ultimoPago: { mes: lastMes, anio: lastAnio },
@@ -97,7 +101,6 @@ export const clientesAtrasados = async (req: Request, res: Response) => {
     res.status(500).json({ msg: "Error al obtener clientes atrasados" });
   }
 };
-
 
 // Obtener todos los pagos de un año específico
 export const pagosPorAnio = async (req: Request, res: Response) => {
@@ -121,14 +124,52 @@ export const pagosPorAnio = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Meses disponibles por DUI
 export const obtenerMesesDisponibles = async (req: Request, res: Response) => {
   try {
-    const { dui } = req.params;
+    const { dui, nombre } = req.query as { dui?: string; nombre?: string };
+
+    if (!dui && !nombre) {
+      return res.status(400).json({ msg: "Debe proporcionar DUI o nombre" });
+    }
+
+    let cliente = null;
+
+    if (dui) {
+      cliente = await Client.findOne({ dui });
+    } else if (nombre) {
+      const coincidencias = await Client.find({
+        nombre: { $regex: new RegExp(nombre, "i") },
+      });
+
+      if (coincidencias.length === 0) {
+        return res.status(404).json({ msg: "No se encontraron clientes" });
+      }
+
+      if (coincidencias.length > 1) {
+        // 🔹 Hay más de un cliente con ese nombre → devolvemos coincidencias
+        return res.status(200).json({
+          coincidencias: coincidencias.map((c) => ({
+            id: c._id,
+            nombre: c.nombre,
+            apellido: c.apellido,
+            dui: c.dui,
+            estado: c.estado,
+          })),
+        });
+      }
+
+      cliente = coincidencias[0];
+    }
+
+    if (!cliente) {
+      return res.status(404).json({ msg: "Cliente no encontrado" });
+    }
+
     const mesesDisponibles = await PaymentService.obtenerMesesDisponiblesPorDui(
-      dui
+      cliente.dui
     );
-    res.status(200).json({ mesesDisponibles });
+
+    res.status(200).json({ mesesDisponibles, cliente });
   } catch (error: any) {
     res
       .status(500)
