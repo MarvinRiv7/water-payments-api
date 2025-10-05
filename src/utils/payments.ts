@@ -10,7 +10,7 @@ export const calcularMonto = (
   let mora = 1;
 
   if (pagoTipo === "medio") {
-    base = 5;
+    base = 6;
   } else if (pagoTipo === "minimo") {
     base = 3.5;
   }
