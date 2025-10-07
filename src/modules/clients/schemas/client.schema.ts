@@ -7,21 +7,25 @@ export const clientBaseSchema = z.object({
   }),
   nombre: z
     .string()
-    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, {
-      message: "El nombre solo puede contener letras y espacios",
+    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-,]+$/, {
+      message:
+        "El nombre solo puede contener letras, espacios, guiones y comas",
     })
     .min(3, { message: "El nombre debe tener al menos 3 caracteres" }),
+
   apellido: z
     .string()
-    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, {
-      message: "El nombre solo puede contener letras y espacios",
+    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-,]+$/, {
+      message:
+        "El apellido solo puede contener letras, espacios, guiones y comas",
     })
     .min(3, { message: "El apellido debe tener al menos 3 caracteres" }),
+
   ultimoMes: z.number().min(1).max(12),
   ultimoAnio: z.number().min(2025),
   estado: z.enum(["Activo", "Desconectado", "Exonerado"]),
   pagoTipo: z.enum(["maximo", "medio", "minimo"]),
-  mesesAtrasados: z.number().optional()
+  mesesAtrasados: z.number().optional(),
 });
 
 export const clientCreateSchema = clientBaseSchema;

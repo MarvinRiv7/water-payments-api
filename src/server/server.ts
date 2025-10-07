@@ -28,7 +28,7 @@ class Server {
   middlewarws() {
     this.app.use(
       cors({
-        origin: ["https://water-app-ten.vercel.app"], // tu frontend en Vercel
+        origin: ["https://water-app-ten.vercel.app"], 
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,
