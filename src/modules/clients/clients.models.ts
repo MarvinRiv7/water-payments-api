@@ -15,6 +15,9 @@ export const clientsSchema = new Schema<IClients>({
     type: String,
     required: true,
   },
+  referencia: {
+    type: String,
+  },
   ultimoMes: {
     type: Number,
     required: true,
@@ -35,10 +38,13 @@ export const clientsSchema = new Schema<IClients>({
     default: "maximo",
     required: true,
   },
+  observaciones: {
+    type: String,
+  },
   mesesAtrasados: {
     type: Number,
-    default: 0
-  }
+    default: 0,
+  },
 });
 
 clientsSchema.methods.toJSON = function () {

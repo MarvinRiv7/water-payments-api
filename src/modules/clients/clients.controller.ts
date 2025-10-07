@@ -78,10 +78,12 @@ export const clientsPost = async (
       dui,
       nombre,
       apellido,
+      referencia,
       ultimoMes,
       ultimoAnio,
       estado,
       pagoTipo,
+      observaciones,
       mesesAtrasados
     } = req.body;
 
@@ -89,10 +91,12 @@ export const clientsPost = async (
       dui,
       nombre,
       apellido,
+      referencia,
       ultimoMes,
       ultimoAnio,
       estado,
       pagoTipo,
+      observaciones,
       mesesAtrasados: 0
     });
     const duiExiste = await Client.findOne({ dui });
@@ -115,14 +119,14 @@ export const clientsPut = async (
 ) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, estado, pagoTipo } = req.body;
+    const { nombre, apellido, referencia, estado, pagoTipo, observaciones } = req.body;
 
     // 🔹 Logs para depuración
     console.log("➡️ PUT /clients/:id");
     console.log("ID recibido:", id);
     console.log("Body recibido:", req.body);
 
-    const dataToUpdate = { nombre, apellido, estado, pagoTipo };
+    const dataToUpdate = { nombre, apellido, referencia, estado, pagoTipo, observaciones };
 
     const client = await Client.findByIdAndUpdate(id, dataToUpdate, {
       new: true,

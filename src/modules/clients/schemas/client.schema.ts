@@ -21,10 +21,12 @@ export const clientBaseSchema = z.object({
     })
     .min(3, { message: "El apellido debe tener al menos 3 caracteres" }),
 
+  referencia: z.string().optional(),
   ultimoMes: z.number().min(1).max(12),
   ultimoAnio: z.number().min(2025),
   estado: z.enum(["Activo", "Desconectado", "Exonerado"]),
   pagoTipo: z.enum(["maximo", "medio", "minimo"]),
+  observaciones: z.string().optional(),
   mesesAtrasados: z.number().optional(),
 });
 

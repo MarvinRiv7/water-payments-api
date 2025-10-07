@@ -9,6 +9,7 @@ dayjs.extend(isSameOrBefore);
 export class PaymentService {
   /**
    * 🔹 Helper: calcula monto con o sin mora
+   * Nueva lógica: aplica mora a todos los meses anteriores al mes anterior al actual.
    */
   private static calcularMontoConMora(
     anio: number,
@@ -24,10 +25,23 @@ export class PaymentService {
       pagoTipo
     );
 
+    // 🔹 Obtener mes y año actual
+    const mesActual = hoy.month() + 1;
+    const anioActual = hoy.year();
+
+    // 🔹 Determinar el mes anterior al actual
+    const mesAnterior = mesActual === 1 ? 12 : mesActual - 1;
+    const anioMesAnterior = mesActual === 1 ? anioActual - 1 : anioActual;
+
+    const fechaMesAnterior = dayjs(`${anioMesAnterior}-${mesAnterior}-01`);
+    const fechaActual = dayjs(`${anioActual}-${mesActual}-01`);
+
+    // 🔹 Aplicar mora si el mes está antes del mes anterior al actual
+    // Ejemplo: si hoy es octubre (10), se aplica mora a enero–agosto,
+    // pero no a septiembre ni octubre.
     let aplicaMora = false;
 
-    // ✅ Aplica mora solo si el mes ya pasó o es actual Y hay 2 o más atrasos
-    if (fechaMes.isSameOrBefore(hoy, "month") && mesesAtrasados >= 2) {
+    if (fechaMes.isBefore(fechaMesAnterior, "month")) {
       aplicaMora = true;
     }
 
@@ -82,7 +96,8 @@ export class PaymentService {
 
         mesesDisponibles.push({
           anio: currentYear,
-          mes: currentMonth,
+          mes: currentMonth,   
+          
           monto: parseFloat(monto.toFixed(2)),
           tipoPago: clienteDB.pagoTipo,
           moraAplicada: aplicaMora,
