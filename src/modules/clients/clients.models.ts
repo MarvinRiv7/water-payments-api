@@ -5,7 +5,7 @@ export const clientsSchema = new Schema<IClients>({
   dui: {
     type: String,
     required: true,
-    unique: true,
+    unique: true
   },
   nombre: {
     type: String,
@@ -46,6 +46,7 @@ export const clientsSchema = new Schema<IClients>({
     default: 0,
   },
 });
+
 
 clientsSchema.methods.toJSON = function () {
   const { __v, ...client } = this.toObject();

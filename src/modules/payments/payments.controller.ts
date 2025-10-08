@@ -152,8 +152,10 @@ export const obtenerMesesDisponibles = async (req: Request, res: Response) => {
             id: c._id,
             nombre: c.nombre,
             apellido: c.apellido,
+            referencia: c.referencia,
             dui: c.dui,
             estado: c.estado,
+            observaciones: c.observaciones,
           })),
         });
       }

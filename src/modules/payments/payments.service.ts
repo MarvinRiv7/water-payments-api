@@ -8,52 +8,29 @@ dayjs.extend(isSameOrBefore);
 
 export class PaymentService {
   /**
-   * 🔹 Helper: calcula monto con o sin mora
-   * Nueva lógica: aplica mora a todos los meses anteriores al mes anterior al actual.
+   * 🔹 Helper: calcula monto sin mora
    */
-  private static calcularMontoConMora(
+  private static calcularMontoSinMora(
     anio: number,
     mes: number,
-    pagoTipo: "maximo" | "medio" | "minimo",
-    mesesAtrasados: number,
-    hoy: dayjs.Dayjs
+    pagoTipo: "maximo" | "medio" | "minimo"
   ) {
-    const fechaMes = dayjs(`${anio}-${mes.toString().padStart(2, "0")}-01`);
-    const { base, mora } = calcularMonto(
+    const { base } = calcularMonto(
       anio,
       mes.toString().padStart(2, "0"),
       pagoTipo
     );
 
-    // 🔹 Obtener mes y año actual
-    const mesActual = hoy.month() + 1;
-    const anioActual = hoy.year();
-
-    // 🔹 Determinar el mes anterior al actual
-    const mesAnterior = mesActual === 1 ? 12 : mesActual - 1;
-    const anioMesAnterior = mesActual === 1 ? anioActual - 1 : anioActual;
-
-    const fechaMesAnterior = dayjs(`${anioMesAnterior}-${mesAnterior}-01`);
-    const fechaActual = dayjs(`${anioActual}-${mesActual}-01`);
-
-    // 🔹 Aplicar mora si el mes está antes del mes anterior al actual
-    // Ejemplo: si hoy es octubre (10), se aplica mora a enero–agosto,
-    // pero no a septiembre ni octubre.
-    let aplicaMora = false;
-
-    if (fechaMes.isBefore(fechaMesAnterior, "month")) {
-      aplicaMora = true;
-    }
+    const fechaMes = dayjs(`${anio}-${mes.toString().padStart(2, "0")}-01`);
 
     return {
-      monto: aplicaMora ? base + mora : base,
-      aplicaMora,
+      monto: base,
       fechaMes,
     };
   }
 
   /**
-   * 🔹 Obtener meses disponibles para un cliente
+   * 🔹 Obtener meses disponibles para un cliente (sin mora)
    */
   static async obtenerMesesDisponiblesPorDui(dui: string) {
     const hoy = dayjs();
@@ -79,33 +56,23 @@ export class PaymentService {
 
     const LIMITE_ANIO = 2028;
     const mesesDisponibles: any[] = [];
-    let mesesAtrasados = clienteDB.mesesAtrasados || 0;
 
     while (currentYear <= LIMITE_ANIO) {
       const key = `${currentYear}-${currentMonth}`;
-      const fechaMes = dayjs(`${currentYear}-${currentMonth}-01`);
 
       if (!mesesPagados.has(key)) {
-        const { monto, aplicaMora } = this.calcularMontoConMora(
+        const { monto } = this.calcularMontoSinMora(
           currentYear,
           currentMonth,
-          clienteDB.pagoTipo,
-          mesesAtrasados,
-          hoy
+          clienteDB.pagoTipo
         );
 
         mesesDisponibles.push({
           anio: currentYear,
-          mes: currentMonth,   
-          
+          mes: currentMonth,
           monto: parseFloat(monto.toFixed(2)),
           tipoPago: clienteDB.pagoTipo,
-          moraAplicada: aplicaMora,
         });
-
-        if (fechaMes.isSameOrBefore(hoy, "month")) {
-          mesesAtrasados++;
-        }
       }
 
       ({ mes: currentMonth, anio: currentYear } = obtenerSiguienteMes(
@@ -118,7 +85,7 @@ export class PaymentService {
   }
 
   /**
-   * 🔹 Procesar pagos de meses seleccionados
+   * 🔹 Procesar pagos de meses seleccionados (sin mora)
    */
   static async procesarPagosPorDui(
     dui: string,
@@ -182,18 +149,12 @@ export class PaymentService {
 
     const pagosGuardados: any[] = [];
     let total = 0;
-    let mesesAtrasados = clienteDB.mesesAtrasados || 0;
-
-    const mesActual = hoy.month() + 1;
-    const anioActual = hoy.year();
 
     for (const { anio, mes } of mesesSeleccionados) {
-      const { monto, aplicaMora, fechaMes } = this.calcularMontoConMora(
+      const { monto } = this.calcularMontoSinMora(
         anio,
         mes,
-        clienteDB.pagoTipo,
-        mesesAtrasados,
-        hoy
+        clienteDB.pagoTipo
       );
 
       const pago = new Payment({
@@ -213,33 +174,15 @@ export class PaymentService {
         mes,
         monto: parseFloat(monto.toFixed(2)),
         fechaPago: pago.fechaPago,
-        moraAplicada: aplicaMora,
       });
 
       total += monto;
-
-      if (fechaMes.isSameOrBefore(hoy, "month")) {
-        mesesAtrasados++;
-      }
     }
 
     if (pagosGuardados.length > 0) {
       const ultimoPagado = pagosGuardados[pagosGuardados.length - 1];
-      const inicioMesActual = dayjs(`${anioActual}-${mesActual}-01`);
-      const teniaMoraAlInicio =
-        clienteDB.mesesAtrasados && clienteDB.mesesAtrasados >= 2;
-
-      if (
-        !teniaMoraAlInicio &&
-        (ultimoPagado.anio > anioActual ||
-          (ultimoPagado.anio === anioActual && ultimoPagado.mes >= mesActual))
-      ) {
-        mesesAtrasados = 0;
-      }
-
       clienteDB.ultimoMes = ultimoPagado.mes;
       clienteDB.ultimoAnio = ultimoPagado.anio;
-      clienteDB.mesesAtrasados = mesesAtrasados;
       await clienteDB.save();
     }
 

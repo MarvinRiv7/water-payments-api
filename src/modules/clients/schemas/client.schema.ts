@@ -1,10 +1,11 @@
 import { z } from "zod";
 
 export const clientBaseSchema = z.object({
-  dui: z.string().regex(/^\d{8}-\d{1}$/, {
+  dui: z.string().regex(/^\d{8}-\d+$/, {
     message:
-      "El DUI debe tener 8 dígitos, un guion y 1 dígito al final (ej: 01234567-8)",
+      "El DUI debe tener 8 dígitos, un guion y al menos 1 dígito después (ej: 01234567-8 o 01234567-89)",
   }),
+
   nombre: z
     .string()
     .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-,]+$/, {
