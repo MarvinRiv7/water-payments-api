@@ -20,23 +20,19 @@ export const getClientStats = async (req: Request, res: Response) => {
   try {
     const hoy = new Date();
 
-    // 📅 Fecha límite: hoy - 3 meses
+    // 📅 3 meses completos vencidos
     const fechaLimite = new Date(hoy.getFullYear(), hoy.getMonth() - 3, 1);
-
-    const mesLimite = fechaLimite.getMonth() + 1; // 1-12
+    const mesLimite = fechaLimite.getMonth() + 1;
     const anioLimite = fechaLimite.getFullYear();
-
-    // 🚫 Estados que NO pueden estar atrasados
-    const estadosNoAtrasables = ["Desconectado", "Exonerado"];
 
     // 🔴 ATRASADOS (solo ACTIVOS)
     const totalAtrasados = await Client.countDocuments({
-      estado: { $nin: estadosNoAtrasables },
+      estado: "Activo",
       $or: [
         { ultimoAnio: { $lt: anioLimite } },
         {
           ultimoAnio: anioLimite,
-          ultimoMes: { $lte: mesLimite },
+          ultimoMes: { $lt: mesLimite },
         },
       ],
     });
@@ -44,17 +40,14 @@ export const getClientStats = async (req: Request, res: Response) => {
     // 🟢 AL DÍA
     const totalAlDia = await Client.countDocuments({
       $or: [
-        // Exonerados o Desconectados siempre al día
-        { estado: { $in: estadosNoAtrasables } },
-
-        // Activos con pagos recientes
+        { estado: { $in: ["Exonerado", "Desconectado"] } },
         {
-          estado: { $nin: estadosNoAtrasables },
+          estado: "Activo",
           $or: [
             { ultimoAnio: { $gt: anioLimite } },
             {
               ultimoAnio: anioLimite,
-              ultimoMes: { $gt: mesLimite },
+              ultimoMes: { $gte: mesLimite },
             },
           ],
         },
@@ -92,7 +85,6 @@ export const getClientStatusStats = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export const getClientByDui = async (req: Request, res: Response) => {
   try {
