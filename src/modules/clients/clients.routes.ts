@@ -6,6 +6,7 @@ import {
   clientsPut,
   getClientByDui,
   getClientStats,
+  getClientStatusStats,
 } from "./clients.controller";
 import { body, check, param } from "express-validator";
 import { validarCampos } from "../../middlewares/validar-campos";
@@ -25,13 +26,15 @@ const router = Router();
 
 router.get("/", authMiddleware, clientsGet);
 router.get("/stats", getClientStats);
+router.get("/stats/status", authMiddleware, getClientStatusStats);
+
 router.get("/:dui", authMiddleware, getClientByDui);
 
 router.post(
   "/",
   authMiddleware,
   validateSchema(clientCreateSchema, "body"),
-  clientsPost
+  clientsPost,
 );
 router.put(
   "/:id",
@@ -39,14 +42,14 @@ router.put(
   validateSchema(z.object({ id: clientUpdateSchema.shape.id }), "params"),
   validateSchema(clientUpdateSchema.omit({ id: true }), "body"),
   validateClientExists,
-  clientsPut
+  clientsPut,
 );
 router.delete(
   "/:id",
   authMiddleware,
   validateSchema(clientDeleteSchema, "params"),
   validateClientExists,
-  clientsDelete
+  clientsDelete,
 );
 
 export default router;

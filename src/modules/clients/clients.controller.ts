@@ -19,26 +19,45 @@ export const clientsGet = async (req: Request, res: Response) => {
 export const getClientStats = async (req: Request, res: Response) => {
   try {
     const hoy = new Date();
-    const mesActual = hoy.getMonth() + 1; // 1-12
-    const anioActual = hoy.getFullYear();
 
-    // Al día: último pago >= mes anterior (o año anterior si estamos en enero)
-    const mesAnterior = mesActual === 1 ? 12 : mesActual - 1;
-    const anioMesAnterior = mesActual === 1 ? anioActual - 1 : anioActual;
+    // 📅 Fecha límite: hoy - 3 meses
+    const fechaLimite = new Date(hoy.getFullYear(), hoy.getMonth() - 3, 1);
 
-    const totalAlDia = await Client.countDocuments({
+    const mesLimite = fechaLimite.getMonth() + 1; // 1-12
+    const anioLimite = fechaLimite.getFullYear();
+
+    // 🚫 Estados que NO pueden estar atrasados
+    const estadosNoAtrasables = ["Desconectado", "Exonerado"];
+
+    // 🔴 ATRASADOS (solo ACTIVOS)
+    const totalAtrasados = await Client.countDocuments({
+      estado: { $nin: estadosNoAtrasables },
       $or: [
-        // Pagos posteriores al mes anterior
-        { ultimoAnio: { $gt: anioMesAnterior } },
-        { ultimoAnio: anioMesAnterior, ultimoMes: { $gte: mesAnterior } },
+        { ultimoAnio: { $lt: anioLimite } },
+        {
+          ultimoAnio: anioLimite,
+          ultimoMes: { $lte: mesLimite },
+        },
       ],
     });
 
-    // Atrasados: último pago menor al mes anterior
-    const totalAtrasados = await Client.countDocuments({
+    // 🟢 AL DÍA
+    const totalAlDia = await Client.countDocuments({
       $or: [
-        { ultimoAnio: { $lt: anioMesAnterior } },
-        { ultimoAnio: anioMesAnterior, ultimoMes: { $lt: mesAnterior } },
+        // Exonerados o Desconectados siempre al día
+        { estado: { $in: estadosNoAtrasables } },
+
+        // Activos con pagos recientes
+        {
+          estado: { $nin: estadosNoAtrasables },
+          $or: [
+            { ultimoAnio: { $gt: anioLimite } },
+            {
+              ultimoAnio: anioLimite,
+              ultimoMes: { $gt: mesLimite },
+            },
+          ],
+        },
       ],
     });
 
@@ -51,6 +70,29 @@ export const getClientStats = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al obtener estadísticas" });
   }
 };
+
+export const getClientStatusStats = async (req: Request, res: Response) => {
+  try {
+    const [activos, exonerados, desconectados] = await Promise.all([
+      Client.countDocuments({ estado: "Activo" }),
+      Client.countDocuments({ estado: "Exonerado" }),
+      Client.countDocuments({ estado: "Desconectado" }),
+    ]);
+
+    res.status(200).json({
+      activos,
+      exonerados,
+      desconectados,
+      total: activos + exonerados + desconectados,
+    });
+  } catch (error) {
+    console.error("Error en getClientStatusStats:", error);
+    res.status(500).json({
+      msg: "Error al obtener estadísticas de estado de clientes",
+    });
+  }
+};
+
 
 export const getClientByDui = async (req: Request, res: Response) => {
   try {
@@ -70,7 +112,7 @@ export const getClientByDui = async (req: Request, res: Response) => {
 
 export const clientsPost = async (
   req: Request<{}, {}, ClientCreateInput>,
-  res: Response
+  res: Response,
 ) => {
   try {
     // req.body ya está validado por Zod en el middleware
@@ -84,7 +126,7 @@ export const clientsPost = async (
       estado,
       pagoTipo,
       observaciones,
-      mesesAtrasados
+      mesesAtrasados,
     } = req.body;
 
     const client = new Client({
@@ -97,7 +139,7 @@ export const clientsPost = async (
       estado,
       pagoTipo,
       observaciones,
-      mesesAtrasados: 0
+      mesesAtrasados: 0,
     });
     const duiExiste = await Client.findOne({ dui });
     if (duiExiste) {
@@ -115,18 +157,26 @@ export const clientsPost = async (
 };
 export const clientsPut = async (
   req: Request<{ id: string }, {}, Partial<ClientUpdateInput>>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, referencia, estado, pagoTipo, observaciones } = req.body;
+    const { nombre, apellido, referencia, estado, pagoTipo, observaciones } =
+      req.body;
 
     // 🔹 Logs para depuración
     console.log("➡️ PUT /clients/:id");
     console.log("ID recibido:", id);
     console.log("Body recibido:", req.body);
 
-    const dataToUpdate = { nombre, apellido, referencia, estado, pagoTipo, observaciones };
+    const dataToUpdate = {
+      nombre,
+      apellido,
+      referencia,
+      estado,
+      pagoTipo,
+      observaciones,
+    };
 
     const client = await Client.findByIdAndUpdate(id, dataToUpdate, {
       new: true,
